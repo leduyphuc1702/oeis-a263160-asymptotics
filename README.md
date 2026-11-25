@@ -1,5 +1,9 @@
 # Exact Diagonal Asymptotics for Multidimensional Lattice Paths (OEIS A263160 & A262810)
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24520339.svg)](https://doi.org/10.5281/zenodo.24520339)
+
+**Preprint (Zenodo DOI):** [https://doi.org/10.5281/zenodo.24520339](https://doi.org/10.5281/zenodo.24520339)
+
 This repository contains the LaTeX manuscript and independent numerical verification code proving two diagonal asymptotic formulas in the On-Line Encyclopedia of Integer Sequences (OEIS):
 
 1. **OEIS [A263160](https://oeis.org/A263160)** (first-zero lattice paths starting at $(n,\dots,n)\in\mathbb{Z}_{>0}^n$):
