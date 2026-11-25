@@ -1,0 +1,572 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
+}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\oeis}[1]{\href{https://oeis.org/#1}{\texttt{#1}}}
+
+\title{Exact Diagonal Asymptotics for Multidimensional Lattice Paths\\
+and Closed-Form Constant for OEIS A263160}
+
+\author{Le Duy Phuc\thanks{Email: \href{mailto:leduyphuc1702@gmail.com}{\texttt{leduyphuc1702@gmail.com}}}}
+\date{November 25, 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We establish complete, elementary asymptotic proofs for two diagonal lattice-path counting sequences in the On-Line Encyclopedia of Integer Sequences: \oeis{A263160} (paths starting at $(n,\dots,n)\in\mathbb{Z}_{>0}^n$, decrementing a nonempty subset of coordinates by $1$ at each step, and terminating when any coordinate first reaches $0$) and its companion \oeis{A262810} (paths from $(n,\dots,n)$ to $(0,\dots,0)$ under the same step set, equivalently many-to-many alignments of $n$ sequences of length $n$).
+
+For \oeis{A263160}, we prove Vaclav Kotesovec's November 2026 asymptotic formula and identify the exact closed form of the leading constant:
+\[
+  a(n) \sim C\,\frac{n^{n(n-3/2)+1}}{\pi^{n/2}(\log 2)^{n(n-1)}},
+  \qquad
+  C = \frac{2\sqrt{2\pi}}{\log 2}\exp\!\left(\frac{5}{12}-\frac{(\log 2)^2}{24}\right)
+  = 10.753662835613289\ldots
+\]
+By the same unified method---combining geometric binomial-moment series with a localized Laplace/Gamma-moment comparison and explicit tail bounds---we also prove Kotesovec's March 2016 asymptotic formula for \oeis{A262810}:
+\[
+  b(n) \sim \frac{n^{n^2 - n/2 + 1}}{e^{1/12}\,2^{n + (\log 2)/24}\,\pi^{(n-1)/2}\,(\log 2)^{n^2+1}}.
+\]
+\end{abstract}
+
+\noindent\textbf{MSC 2020:} 05A16, 05A15.\\
+\textbf{Keywords:} lattice paths, diagonal asymptotics, binomial moments, OEIS A263160, OEIS A262810, multiple sequence alignments.
+
+\section{Introduction}
+
+Consider an $n$-dimensional lattice walk starting at $(n,n,\dots,n)\in\mathbb{Z}_{>0}^n$, where each step selects a nonempty subset $S\subseteq\{1,\dots,n\}$ and decrements every coordinate $i\in S$ by $1$. Two natural stopping rules yield two closely related diagonal counting sequences introduced by Alois P.~Heinz in the On-Line Encyclopedia of Integer Sequences (OEIS)~\cite{OEIS}:
+\begin{enumerate}
+  \item \textbf{First-zero stopping (\oeis{A263160}):} the path terminates as soon as at least one coordinate reaches $0$ (simultaneous first zeros count as a single terminal path). Its count $a(n)=\oeis{A263159}(n,n)$ begins
+  \[
+    1, 1, 13, 5419, 328504401, 7622403922836151, \dots \qquad (n\ge 0).
+  \]
+  \item \textbf{Origin-reaching stopping (\oeis{A262810}):} the path continues until all coordinates simultaneously reach $0$, without ever becoming negative. Its count $b(n)=\oeis{A262809}(n,n)$ also equals the number of many-to-many alignments of $n$ sequences of length $n$~\cite{Slowinski1998,Eger2015} and begins
+  \[
+    1, 1, 13, 16081, 5552351121, 1050740615666453461, \dots \qquad (n\ge 0).
+  \]
+\end{enumerate}
+
+While fixed-dimension asymptotics (keeping the number of coordinates fixed as the starting height grows) have been studied via generating functions and saddle-point methods~\cite{Eger2015}, the diagonal regime---where dimension and height grow simultaneously---exhibits super-exponential growth at scale $n^{n^2}$ and requires uniform control across both parameters.
+
+On November 9, 2026, Vaclav Kotesovec conjectured on \oeis{A263160} the logarithmic-scale limit $\lim_{n\to\infty} a(n)^{1/n^2}/n = 1/\log 2$, which was subsequently formalized in Lean by the \texttt{trureturing} project~\cite{Trureturing2026}. On November 13, 2026, Kotesovec replaced that conjecture on \oeis{A263160} with the sharp asymptotic assertion
+\begin{equation}\label{eq:a263160-kotesovec}
+  a(n) \sim c\,\frac{n^{n(n-3/2)+1}}{\pi^{n/2}(\log 2)^{n(n-1)}},
+  \qquad c = 10.75366283\ldots,
+\end{equation}
+without an explicit formula for $c$ or a published proof. Similarly, on March 23, 2016, Kotesovec stated on \oeis{A262810} the diagonal asymptotic
+\begin{equation}\label{eq:a262810-kotesovec}
+  b(n) \sim \frac{n^{n^2 - n/2 + 1}}{e^{1/12}\,2^{n + (\log 2)/24}\,\pi^{(n-1)/2}\,(\log 2)^{n^2+1}},
+\end{equation}
+for which a self-contained published proof likewise appears to be absent from the literature.
+
+In this note we prove both~\eqref{eq:a263160-kotesovec} and~\eqref{eq:a262810-kotesovec} within a single elementary framework, and determine the exact closed form of the constant in~\eqref{eq:a263160-kotesovec}.
+
+\begin{theorem}[Diagonal asymptotic for \oeis{A263160}]\label{thm:a263160}
+As $n\to\infty$, the number $a(n)$ of first-zero lattice paths starting at $(n,\dots,n)\in\mathbb{Z}_{>0}^n$ satisfies
+\[
+  a(n) \sim C\,\frac{n^{n(n-3/2)+1}}{\pi^{n/2}(\log 2)^{n(n-1)}},
+\]
+where
+\[
+  C = \frac{2\sqrt{2\pi}}{\log 2}\exp\!\left(\frac{5}{12}-\frac{(\log 2)^2}{24}\right)
+    = 10.753662835613289269205078134100\ldots
+\]
+\end{theorem}
+
+\begin{theorem}[Diagonal asymptotic for \oeis{A262810}]\label{thm:a262810}
+As $n\to\infty$, the number $b(n)$ of origin-reaching lattice paths from $(n,\dots,n)$ to $(0,\dots,0)$ satisfies
+\[
+  b(n) \sim \frac{n^{n^2 - n/2 + 1}}{e^{1/12}\,2^{n + (\log 2)/24}\,\pi^{(n-1)/2}\,(\log 2)^{n^2+1}}.
+\]
+\end{theorem}
+
+\begin{corollary}\label{cor:root-limit}
+Both sequences share the leading logarithmic scale:
+\[
+  \lim_{n\to\infty}\frac{a(n)^{1/n^2}}{n}
+  = \lim_{n\to\infty}\frac{b(n)^{1/n^2}}{n}
+  = \frac{1}{\log 2}.
+\]
+\end{corollary}
+
+The proof proceeds in two parts. Section~\ref{sec:series} records the exact geometric binomial-moment series for $a(n)$ and $b(n)$ (building on the empty-column insertion identities of Bala, Eger, Jovovic, and~\cite{Trureturing2026}). Section~\ref{sec:asymptotics} proves a unified asymptotic theorem for the sums
+\[
+  S_{\mathrm{bin}}(n,m) := \sum_{k=m}^{\infty} 2^{-k}\binom{k}{m}^n
+  \qquad\text{and}\qquad
+  S_{\mathrm{cum}}(n,m) := \sum_{k=0}^{\infty} 2^{-k}P_m(k)^n,
+\]
+where $P_m(k) := \sum_{r=0}^{m}\binom{k}{r}$ and $m\in\{n-1,n\}$. In particular, we obtain the clean structural relation $S_{\mathrm{cum}}(n,m) \sim 2\,S_{\mathrm{bin}}(n,m)$, from which Theorems~\ref{thm:a263160} and~\ref{thm:a262810} follow via Stirling's formula. Section~\ref{sec:numerics} presents independent numerical verification against the official OEIS tables and cancellation-free evaluations up to $n=1000$.
+
+\section{Exact Geometric Binomial-Moment Representations}\label{sec:series}
+
+Throughout this paper we set $\lambda := \log 2$, and use the convention $\binom{k}{r}=0$ whenever $r>k$ or $r<0$. For integers $k\ge 0$ and $m\ge 0$, define the truncated binomial sum
+\[
+  P_m(k) := \sum_{r=0}^{m}\binom{k}{r}.
+\]
+
+\begin{proposition}\label{prop:series}
+For every integer $n\ge 1$,
+\begin{align}
+  a(n) &= 1 + (2^{n-1}-1)\sum_{k=0}^{\infty} e^{-\lambda k} P_{n-1}(k)^n
+       = 1 + (2^{n-1}-1)\,S_{\mathrm{cum}}(n,n-1), \label{eq:a-series}\\
+  b(n) &= \frac{1}{2}\sum_{k=n}^{\infty} e^{-\lambda k} \binom{k}{n}^n
+       = \frac{1}{2}\,S_{\mathrm{bin}}(n,n). \label{eq:b-series}
+\end{align}
+\end{proposition}
+
+\begin{proof}
+We recall the standard empty-column insertion argument (cf.~\cite{Eger2015}, Peter Bala's formula on \oeis{A262809}, Vladeta Jovovic's formula on \oeis{A263160}, and the formal proof in~\cite{Trureturing2026}).
+
+For~\eqref{eq:a-series}, set $m=n-1$. Call a finite word of nonempty steps $S_1,\dots,S_t \subseteq \{1,\dots,n\}$ \emph{internal} if each coordinate $i\in\{1,\dots,n\}$ appears in at most $m$ of the steps (i.e., the path has not yet hit zero). Let $I_t$ be the number of internal words of length $t$, and set $I := \sum_{t=0}^{nm} I_t$. In the rooted tree of all valid paths, the internal vertices are precisely the internal words, each having $2^n-1$ children (one per nonempty step), while the leaves are the terminal first-zero paths counted by $a(n)$. Since a tree with $I$ internal vertices of out-degree $2^n-1$ has $1 + ((2^n-1)-1)I$ leaves, we obtain
+\[
+  a(n) = 1 + (2^n - 2)I.
+\]
+On the other hand, an $n\times k$ binary matrix whose rows each contain at most $m$ ones is obtained uniquely by choosing an internal word of some length $t\in\{0,\dots,nm\}$ (representing the $t$ nonzero columns) together with $\binom{k}{t}$ positions for those columns among the $k$ columns. Counting row-by-row gives $P_m(k)^n$, hence
+\[
+  P_m(k)^n = \sum_{t=0}^{nm} \binom{k}{t} I_t \qquad (k\ge 0).
+\]
+Applying the elementary binomial-geometric identity
+\begin{equation}\label{eq:geom-binom}
+  \sum_{k=t}^{\infty} \frac{\binom{k}{t}}{2^{k+1}} = 1 \qquad (t\ge 0)
+\end{equation}
+and exchanging the finite sum over $t$ with the convergent sum over $k$ yields
+\[
+  I = \sum_{t=0}^{nm} I_t \sum_{k=t}^{\infty} \frac{\binom{k}{t}}{2^{k+1}}
+    = \frac{1}{2}\sum_{k=0}^{\infty} 2^{-k} P_m(k)^n.
+\]
+Substituting into $a(n) = 1 + (2^n-2)I$ gives~\eqref{eq:a-series}.
+
+For~\eqref{eq:b-series}, let $J_t$ be the number of origin-reaching paths of length $t$ from $(n,\dots,n)$ to $(0,\dots,0)$, so that $b(n) = \sum_{t=n}^{n^2} J_t$. Counting $n\times k$ binary matrices with exactly $n$ ones in every row both row-by-row and by the number $t$ of nonzero columns yields $\binom{k}{n}^n = \sum_{t=n}^{n^2} \binom{k}{t} J_t$ for all $k\ge 0$. Multiplying by $2^{-(k+1)}$, summing over $k\ge 0$, and applying~\eqref{eq:geom-binom} gives~\eqref{eq:b-series}.
+\end{proof}
+
+\section{Unified Asymptotic Analysis}\label{sec:asymptotics}
+
+For an integer $N\ge 1$ and a real parameter $s>0$, define the discrete and continuous Gamma moments
+\[
+  W_s(N) := \sum_{k=1}^{\infty} k^N e^{-sk},
+  \qquad
+  I_s(N) := \int_0^{\infty} x^N e^{-sx}\,dx = \frac{N!}{s^{N+1}}.
+\]
+
+\begin{lemma}[Gamma sum--integral and tail bounds]\label{lem:gamma}
+Let $N\ge 1$ and $s>0$, and let $f(x):=x^N e^{-sx}$ on $[0,\infty)$, which attains its unique maximum at $x_* = N/s$ with value $M := f(x_*) = (N/(es))^N$.
+\begin{enumerate}
+  \item[\textup{(a)}] Global comparison:
+  \[
+    |W_s(N) - I_s(N)| \le M
+    \qquad\text{and}\qquad
+    \left|\frac{W_s(N)}{I_s(N)} - 1\right| \le \frac{s}{\sqrt{2\pi N}}.
+  \]
+  \item[\textup{(b)}] Tail comparison: for any reals $a,b$ satisfying $0 < a < x_* < b$,
+  \[
+    \sum_{\substack{k\ge 1 \\ k\notin (a,b)}} f(k)
+    \le \int_{[0,\infty)\setminus (a,b)} f(x)\,dx + 2M.
+  \]
+  In particular, if $X\sim\mathrm{Gamma}(N+1,s)$ (with mean $\mu=(N+1)/s$ and variance $\sigma^2=(N+1)/s^2$) and $\delta := \min(\mu-a,\, b-\mu) > 0$, then
+  \[
+    \frac{1}{I_s(N)}\sum_{\substack{k\ge 1 \\ k\notin (a,b)}} k^N e^{-sk}
+    \le \frac{N+1}{s^2 \delta^2} + \frac{2s}{\sqrt{2\pi N}}.
+  \]
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+Since $f'(x) = (N - sx)x^{N-1}e^{-sx}$, $f$ is strictly increasing on $[0,x_*]$ and strictly decreasing on $[x_*,\infty)$.
+
+For~(a), let $k_* := \lfloor x_* \rfloor \ge 0$, so that $x_*\in [k_*, k_*+1]$. By monotonicity on $[0,k_*]$ and $[k_*+1,\infty)$,
+\begin{align*}
+  \sum_{k=1}^{k_*-1} f(k) &\le \int_1^{k_*} f(x)\,dx \le \int_0^{k_*} f(x)\,dx,
+  &
+  \sum_{k=k_*+2}^{\infty} f(k) &\le \int_{k_*+1}^{\infty} f(x)\,dx,
+\end{align*}
+and in the opposite direction,
+\begin{align*}
+  \int_0^{k_*} f(x)\,dx &\le \sum_{k=1}^{k_*} f(k),
+  &
+  \int_{k_*+1}^{\infty} f(x)\,dx &\le \sum_{k=k_*+1}^{\infty} f(k).
+\end{align*}
+Because $f$ is unimodal with peak in $[k_*, k_*+1]$, we have $\min(f(k_*),f(k_*+1)) \le f(x) \le M$ for all $x\in [k_*, k_*+1]$. Integrating over $[k_*,k_*+1]$ gives
+\[
+  \min(f(k_*),f(k_*+1)) \le \int_{k_*}^{k_*+1} f(x)\,dx \le M.
+\]
+Hence
+\[
+  W_s(N) - I_s(N) \le f(k_*) + f(k_*+1) - \int_{k_*}^{k_*+1} f(x)\,dx
+  \le \max(f(k_*),f(k_*+1)) \le M,
+\]
+while $I_s(N) - W_s(N) \le \int_{k_*}^{k_*+1} f(x)\,dx \le M$, proving $|W_s(N) - I_s(N)| \le M$. By Robbins' lower bound $N! \ge \sqrt{2\pi N}(N/e)^N$,
+\[
+  \frac{M}{I_s(N)} = \frac{s(N/e)^N}{N!} \le \frac{s}{\sqrt{2\pi N}}.
+\]
+
+For~(b), since $f$ increases on $[0,a]\subseteq [0,x_*]$ and decreases on $[b,\infty)\subseteq [x_*,\infty)$,
+\[
+  \sum_{1\le k\le a} f(k) \le \int_0^{a} f(x)\,dx + f(\lfloor a\rfloor) \le \int_0^{a} f(x)\,dx + M,
+\]
+and
+\[
+  \sum_{k\ge b} f(k) \le f(\lceil b\rceil) + \int_{b}^{\infty} f(x)\,dx \le M + \int_{b}^{\infty} f(x)\,dx.
+\]
+Adding these two inequalities yields the first claim of~(b). Dividing by $I_s(N)$, the integral term equals $\mathbb{P}(X\notin (a,b)) \le \mathbb{P}(|X-\mu|\ge \delta)$, which is at most $\sigma^2/\delta^2 = (N+1)/(s^2\delta^2)$ by Chebyshev's inequality, while $2M/I_s(N) \le 2s/\sqrt{2\pi N}$.
+\end{proof}
+
+We now fix $m = m(n) \in \{n-1, n\}$ for $n\ge 2$ and introduce the auxiliary parameters
+\begin{gather*}
+  N := nm, \qquad
+  k_0 := \frac{N}{\lambda}, \qquad
+  B := \frac{nm(m-1)}{2},\\
+  D := \frac{nm(m-1)(2m-1)}{12}, \qquad
+  t := \frac{B}{k_0^2} = \frac{\lambda^2(m-1)}{2nm}.
+\end{gather*}
+Define the central window
+\[
+  \mathcal{W}_n := \bigl\{k\in\mathbb{Z} : |k - k_0| \le n^{6/5}\bigr\}.
+\]
+Observe that as $n\to\infty$, we have $N = n^2 + O(n)$, $k_0 = n^2/\lambda + O(n)$, $B = \tfrac{1}{2}n^3 + O(n^2)$, $D = \tfrac{1}{6}n^4 + O(n^3)$, and $t = \frac{\lambda^2}{2n} + O(n^{-2})$.
+
+\begin{lemma}[Uniform expansion on the central window]\label{lem:central}
+Let $m\in\{n-1,n\}$. Uniformly for $k\in\mathcal{W}_n$ as $n\to\infty$,
+\begin{align}
+  e^{-\lambda k}\binom{k}{m}^n
+  &= \bigl(1 + O(n^{-3/5})\bigr)\,
+     \frac{e^{-B/k_0 - t k_0 - \lambda^2/6}}{(m!)^n}\, k^N e^{-(\lambda - t)k},
+     \label{eq:central-bin}\\
+  e^{-\lambda k} P_m(k)^n
+  &= \bigl(1 + O(n^{-3/5})\bigr)\,
+     \frac{e^{-B/k_0 - t k_0 - \lambda^2/6 + \lambda}}{(m!)^n}\, k^N e^{-(\lambda - t)k}.
+     \label{eq:central-cum}
+\end{align}
+\end{lemma}
+
+\begin{proof}
+For sufficiently large $n$ and every $k\in\mathcal{W}_n$, we have $k \ge k_0/2 \ge 2m$ and $|k - k_0|/k_0 \le n^{6/5}/k_0 = O(n^{-4/5})$.
+
+First, write $\binom{k}{m} = \frac{k^m}{m!}\prod_{j=0}^{m-1}(1 - j/k)$. For $0\le u\le 1/2$,
+\[
+  \left|\log(1-u) + u + \frac{u^2}{2}\right|
+  = \sum_{r=3}^{\infty}\frac{u^r}{r}
+  \le \frac{u^3}{3(1-u)}
+  \le \frac{2}{3}u^3.
+\]
+Setting $u = j/k \le m/k = O(n^{-1})$ and summing over $j=0,\dots,m-1$ gives
+\[
+  \log\binom{k}{m}
+  = m\log k - \log(m!) - \frac{m(m-1)}{2k} - \frac{m(m-1)(2m-1)}{12k^2} + O\!\left(\frac{m^4}{k^3}\right).
+\]
+Since $m^4/k^3 = O(n^{-2})$ uniformly on $\mathcal{W}_n$, multiplying by $n$ yields
+\begin{equation}\label{eq:log-binom-central}
+  n\log\binom{k}{m} = N\log k - n\log(m!) - \frac{B}{k} - \frac{D}{k^2} + O(n^{-1}).
+\end{equation}
+
+Second, for the cumulative ratio $P_m(k)/\binom{k}{m}$, consecutive binomial terms satisfy
+\begin{equation}\label{eq:binom-step-ratio}
+  \frac{\binom{k}{r-1}}{\binom{k}{r}} = \frac{r}{k-r+1} \le \frac{m}{k-m+1} =: \rho
+  \qquad (1\le r\le m).
+\end{equation}
+On $\mathcal{W}_n$, $\rho = O(n^{-1}) \le 1/2$ for large $n$. Separating the $r=m-1$ term gives
+\[
+  \frac{\binom{k}{m-1}}{\binom{k}{m}} = \frac{m}{k-m+1} = \frac{m}{k} + \frac{m(m-1)}{k(k-m+1)} = \frac{m}{k} + O(n^{-2}),
+\]
+while the remaining terms satisfy
+\[
+  0 \le \sum_{r=0}^{m-2}\frac{\binom{k}{r}}{\binom{k}{m}}
+  \le \sum_{j=2}^{m}\rho^j
+  \le \frac{\rho^2}{1-\rho}
+  = O(n^{-2}).
+\]
+Thus $P_m(k)/\binom{k}{m} = 1 + m/k + O(n^{-2})$ uniformly on $\mathcal{W}_n$. Applying $\log(1+x) = x + O(x^2)$ and multiplying by $n$ gives
+\begin{equation}\label{eq:log-P-ratio-central}
+  n\log\!\left(\frac{P_m(k)}{\binom{k}{m}}\right) = \frac{N}{k} + O(n^{-1}).
+\end{equation}
+
+Third, write $\Delta := k - k_0$ and use the exact algebraic identity
+\begin{equation}\label{eq:inv-k-identity}
+  -\frac{B}{k} = -\frac{B}{k_0} + t\Delta - \frac{B\Delta^2}{k_0^2 k}
+  \qquad (k>0).
+\end{equation}
+On $\mathcal{W}_n$, $|\Delta|\le n^{6/5}$ and $k\ge k_0/2$, so
+\[
+  0 \le \frac{B\Delta^2}{k_0^2 k} \le \frac{2B n^{12/5}}{k_0^3} = O(n^{-3/5}).
+\]
+Furthermore, since $k/k_0 = 1 + O(n^{-4/5})$,
+\[
+  \frac{D}{k^2} = \frac{D}{k_0^2}\bigl(1 + O(n^{-4/5})\bigr)
+  = \frac{\lambda^2 (m-1)(2m-1)}{12nm}\bigl(1 + O(n^{-4/5})\bigr)
+  = \frac{\lambda^2}{6} + O(n^{-4/5}),
+\]
+and similarly $N/k = \lambda + O(n^{-4/5})$. Substituting these estimates and~\eqref{eq:inv-k-identity} into~\eqref{eq:log-binom-central} and~\eqref{eq:log-P-ratio-central}, subtracting $\lambda k$, and exponentiating yields~\eqref{eq:central-bin} and~\eqref{eq:central-cum}.
+\end{proof}
+
+\begin{lemma}[Negligibility of outer tails]\label{lem:tails}
+Let $m\in\{n-1,n\}$. As $n\to\infty$,
+\[
+  \sum_{\substack{k\ge 0 \\ k\notin \mathcal{W}_n}} e^{-\lambda k} P_m(k)^n
+  = o\!\left(\frac{e^{-B/k_0 - t k_0}}{(m!)^n}\,W_{\lambda - t}(N)\right).
+\]
+Consequently, the same bound holds with $P_m(k)$ replaced by $\binom{k}{m}$.
+\end{lemma}
+
+\begin{proof}
+Since $0 \le \binom{k}{m} \le P_m(k)$ for all $k\ge 0$, the second statement is immediate from the first. We split the sum over $k\notin\mathcal{W}_n$ into two regimes: $k\ge k_0/2$ and $0\le k < k_0/2$.
+
+\medskip
+\noindent\textbf{Regime 1: $k\ge k_0/2$ and $|k - k_0| > n^{6/5}$.}
+For sufficiently large $n$ and every $k\ge k_0/2 = \frac{nm}{2\lambda}$, we have $k - m + 1 \ge \frac{nm}{3\lambda}$, so $\rho := \frac{m}{k-m+1} \le \frac{3\lambda}{n} < 1$. By~\eqref{eq:binom-step-ratio},
+\[
+  P_m(k) \le \binom{k}{m}\sum_{j=0}^{\infty} \rho^j
+  = \frac{\binom{k}{m}}{1-\rho}
+  \le \binom{k}{m}\left(1 - \frac{3\lambda}{n}\right)^{-1}.
+\]
+Because $(1 - 3\lambda/n)^{-n} \to e^{3\lambda} = 8$, we have $(1 - 3\lambda/n)^{-n} \le 16$ for all sufficiently large $n$. Moreover, using $\log(1-u) \le -u$ for $0\le u < 1$,
+\[
+  \binom{k}{m} = \frac{k^m}{m!}\prod_{j=0}^{m-1}\left(1 - \frac{j}{k}\right)
+  \le \frac{k^m}{m!}\exp\!\left(-\frac{m(m-1)}{2k}\right).
+\]
+Raising to the $n$-th power and applying~\eqref{eq:inv-k-identity} (noting that $B\Delta^2/(k_0^2 k)\ge 0$) gives, for every $k\ge k_0/2$,
+\[
+  e^{-\lambda k} P_m(k)^n
+  \le 16\,\frac{k^N}{(m!)^n}\exp\!\left(-\lambda k - \frac{B}{k}\right)
+  \le 16\,\frac{e^{-B/k_0 - t k_0}}{(m!)^n}\, k^N e^{-(\lambda - t)k}.
+\]
+Set $s := \lambda - t$, $a := k_0 - n^{6/5}$, and $b := k_0 + n^{6/5}$. Since $t = O(n^{-1})$ and $k_0 = N/\lambda = O(n^2)$, both $x_* = N/s$ and $\mu = (N+1)/s$ satisfy
+\[
+  x_* - k_0 = \frac{N t}{\lambda(\lambda - t)} = O(n),
+  \qquad
+  \mu - k_0 = O(n).
+\]
+Hence, for large $n$, we have $0 < a < x_* < b$ and $\delta := \min(\mu - a,\, b - \mu) \ge \frac{1}{2}n^{6/5}$. Applying Lemma~\ref{lem:gamma}(a)--(b) with parameter $s = \lambda - t \to \lambda$ yields
+\[
+  \frac{1}{W_{\lambda - t}(N)}
+  \sum_{\substack{k\ge k_0/2 \\ k\notin \mathcal{W}_n}} k^N e^{-(\lambda - t)k}
+  \le \bigl(1 + o(1)\bigr)\left(\frac{4(N+1)}{(\lambda - t)^2 n^{12/5}} + \frac{2(\lambda - t)}{\sqrt{2\pi N}}\right)
+  = O(n^{-2/5}) \to 0.
+\]
+Thus the contribution of Regime~1 is $o\!\left(\frac{e^{-B/k_0 - t k_0}}{(m!)^n}\,W_{\lambda - t}(N)\right)$.
+
+\medskip
+\noindent\textbf{Regime 2: $0\le k < k_0/2$.}
+Using $\binom{m}{m-r}\ge 1$ and Vandermonde's identity,
+\[
+  P_m(k) = \sum_{r=0}^{m}\binom{k}{r}
+  \le \sum_{r=0}^{m}\binom{k}{r}\binom{m}{m-r}
+  = \binom{k+m}{m}
+  \le \frac{(k+m)^m}{m!}.
+\]
+Substituting $j = k + m$ gives
+\[
+  \sum_{0\le k < k_0/2} e^{-\lambda k} P_m(k)^n
+  \le \frac{e^{\lambda m}}{(m!)^n} \sum_{m\le j < k_0/2 + m} j^N e^{-\lambda j}.
+\]
+For sufficiently large $n$, we have $k_0/2 + m \le 0.6 k_0$. For every $j\le 0.6 k_0$, $e^{\lambda j} \le e^{0.6\lambda k_0} = e^{0.6 N}$, so $e^{-\lambda j} \le e^{0.6 N} e^{-2\lambda j}$. Therefore
+\[
+  \sum_{m\le j < k_0/2 + m} j^N e^{-\lambda j}
+  \le e^{0.6 N} \sum_{j=1}^{\infty} j^N e^{-2\lambda j}
+  = e^{0.6 N} W_{2\lambda}(N).
+\]
+Since $t > 0$, we have $W_{\lambda - t}(N) \ge W_\lambda(N)$, and Lemma~\ref{lem:gamma}(a) gives
+\[
+  \frac{W_{2\lambda}(N)}{W_{\lambda - t}(N)}
+  \le \frac{W_{2\lambda}(N)}{W_{\lambda}(N)}
+  = \bigl(1 + o(1)\bigr)\,2^{-(N+1)}
+  = \bigl(1 + o(1)\bigr)\,e^{-\lambda(N+1)}.
+\]
+Also, $B/k_0 = t k_0 = \lambda(m-1)/2$, so $e^{\lambda m + B/k_0 + t k_0} = e^{\lambda(2m-1)}$. Combining these estimates, the ratio of Regime~2 to $\frac{e^{-B/k_0 - t k_0}}{(m!)^n} W_{\lambda - t}(N)$ is at most
+\[
+  \bigl(1 + o(1)\bigr)\exp\!\bigl(0.6 N - \lambda(N+1) + \lambda(2m-1)\bigr)
+  = O\!\left(\exp\!\bigl(-(\lambda - 0.6)N + 2\lambda n\bigr)\right).
+\]
+Because $\lambda = \log 2 = 0.693147\ldots > 0.6$ and $N = \Theta(n^2)$, this ratio decays super-exponentially to $0$.
+\end{proof}
+
+We can now assemble the unified asymptotic theorem for $S_{\mathrm{bin}}(n,m)$ and $S_{\mathrm{cum}}(n,m)$.
+
+\begin{theorem}[Unified binomial-moment asymptotic]\label{thm:unified}
+For $m\in\{n-1, n\}$ and $N = nm$, as $n\to\infty$,
+\begin{align}
+  S_{\mathrm{bin}}(n,m)
+  &\sim \frac{N!}{(m!)^n\,(\log 2)^{N+1}}\,
+        2^{-(m-1)/2}\exp\!\left(-\frac{(\log 2)^2}{24}\right),
+        \label{eq:Sbin-asym}\\
+  S_{\mathrm{cum}}(n,m)
+  &\sim 2\,S_{\mathrm{bin}}(n,m).
+        \label{eq:Scum-asym}
+\end{align}
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:central}, Lemma~\ref{lem:tails}, and Lemma~\ref{lem:gamma}(b) (which shows that $\sum_{k\in\mathcal{W}_n} k^N e^{-(\lambda-t)k} = (1 - o(1))W_{\lambda-t}(N)$), we obtain
+\begin{align*}
+  S_{\mathrm{bin}}(n,m)
+  &\sim \frac{e^{-B/k_0 - t k_0 - \lambda^2/6}}{(m!)^n}\,W_{\lambda - t}(N),\\
+  S_{\mathrm{cum}}(n,m)
+  &\sim e^{\lambda}\,S_{\mathrm{bin}}(n,m) = 2\,S_{\mathrm{bin}}(n,m).
+\end{align*}
+Since $\lambda - t \to \lambda > 0$, Lemma~\ref{lem:gamma}(a) gives
+\[
+  W_{\lambda - t}(N) \sim \frac{N!}{(\lambda - t)^{N+1}}
+  = \frac{N!}{\lambda^{N+1}}\left(\frac{\lambda}{\lambda - t}\right)^{N+1}.
+\]
+Using $N = \lambda k_0$, $t/\lambda = \frac{\lambda(m-1)}{2nm} = \frac{\lambda}{2n} + O(n^{-2})$, and $-\log(1-u) = u + \frac{u^2}{2} + O(u^3)$ as $u\to 0$, we compute
+\begin{align*}
+  -t k_0 + (N+1)\log\!\left(\frac{\lambda}{\lambda - t}\right)
+  &= -t k_0 + (\lambda k_0 + 1)\!\left(\frac{t}{\lambda} + \frac{t^2}{2\lambda^2} + O(n^{-3})\right)\\
+  &= \frac{N t^2}{2\lambda^2} + O(n^{-1})
+   = \frac{nm}{2\lambda^2}\cdot\frac{\lambda^4(m-1)^2}{4n^2 m^2} + O(n^{-1})
+   = \frac{\lambda^2}{8} + O(n^{-1}).
+\end{align*}
+Therefore
+\[
+  e^{-t k_0 - \lambda^2/6}\left(\frac{\lambda}{\lambda - t}\right)^{N+1}
+  \longrightarrow \exp\!\left(\frac{\lambda^2}{8} - \frac{\lambda^2}{6}\right)
+  = \exp\!\left(-\frac{\lambda^2}{24}\right).
+\]
+Finally, $B/k_0 = \lambda(m-1)/2$, so $e^{-B/k_0} = 2^{-(m-1)/2}$. Combining all factors establishes~\eqref{eq:Sbin-asym} and~\eqref{eq:Scum-asym}.
+\end{proof}
+
+\begin{proof}[Proof of Theorems~\ref{thm:a263160} and~\ref{thm:a262810}]
+Recall Stirling's expansion $q! = \sqrt{2\pi q}\,(q/e)^q \exp\!\bigl(\frac{1}{12q} + O(q^{-3})\bigr)$ as $q\to\infty$. For $m\in\{n-1,n\}$ and $N=nm$, we have $N/(12N^2)=O(n^{-2})$ and $n/(12m) = \frac{1}{12} + O(n^{-1})$, whence
+\begin{align}
+  \frac{N!}{(m!)^n}
+  &= \frac{\sqrt{2\pi nm}\,(nm/e)^{nm}\bigl(1+O(n^{-2})\bigr)}
+          {(2\pi m)^{n/2}\,(m/e)^{nm}\exp\!\bigl(\frac{1}{12}+O(n^{-1})\bigr)}
+  \sim \frac{\sqrt{2\pi}\,e^{-1/12}}{(2\pi)^{n/2}}\,n^{nm+1/2}\,m^{(1-n)/2}.
+  \label{eq:stirling-ratio}
+\end{align}
+
+\medskip
+\noindent\textbf{Proof of Theorem~\ref{thm:a263160}.}
+Take $m = n-1$, so $N = n(n-1)$. Write
+\[
+  m^{(1-n)/2} = n^{(1-n)/2}\left(1 - \frac{1}{n}\right)^{-(n-1)/2}.
+\]
+Since $-\frac{n-1}{2}\log(1-1/n) = \frac{n-1}{2}(1/n + O(n^{-2})) = \frac{1}{2} + O(n^{-1})$, we have $(1-1/n)^{-(n-1)/2} \sim e^{1/2}$. Substituting into~\eqref{eq:stirling-ratio} yields
+\[
+  \frac{N!}{(m!)^n}
+  \sim \frac{\sqrt{2\pi}\,e^{5/12}}{(2\pi)^{n/2}}\,n^{n(n-3/2)+1}.
+\]
+By Proposition~\ref{prop:series} and Theorem~\ref{thm:unified},
+\[
+  a(n) = 1 + (2^{n-1}-1)S_{\mathrm{cum}}(n,n-1)
+  \sim 2^{n-1}\cdot 2\,S_{\mathrm{bin}}(n,n-1)
+  = 2^n S_{\mathrm{bin}}(n,n-1).
+\]
+Using $2^n \cdot 2^{-(m-1)/2} = 2^n \cdot 2^{-(n-2)/2} = 2\cdot 2^{n/2}$ to cancel the factor $2^{n/2}$ in $(2\pi)^{n/2} = 2^{n/2}\pi^{n/2}$, we obtain
+\[
+  a(n) \sim \frac{2\sqrt{2\pi}}{\log 2}\exp\!\left(\frac{5}{12}-\frac{(\log 2)^2}{24}\right)
+  \frac{n^{n(n-3/2)+1}}{\pi^{n/2}(\log 2)^{n(n-1)}}.
+\]
+
+\medskip
+\noindent\textbf{Proof of Theorem~\ref{thm:a262810}.}
+Take $m = n$, so $N = n^2$. Equation~\eqref{eq:stirling-ratio} simplifies immediately to
+\[
+  \frac{N!}{(n!)^n}
+  \sim \frac{\sqrt{2\pi}\,e^{-1/12}}{(2\pi)^{n/2}}\,n^{n^2 - n/2 + 1}.
+\]
+By Proposition~\ref{prop:series} and Theorem~\ref{thm:unified},
+\[
+  b(n) = \frac{1}{2}S_{\mathrm{bin}}(n,n)
+  \sim \frac{1}{2}\cdot\frac{\sqrt{2\pi}\,e^{-1/12}}{(2\pi)^{n/2}}\,
+       \frac{n^{n^2-n/2+1}}{(\log 2)^{n^2+1}}\,
+       2^{-(n-1)/2}\exp\!\left(-\frac{(\log 2)^2}{24}\right).
+\]
+Simplifying $\frac{1}{2}\cdot\frac{\sqrt{2\pi}}{(2\pi)^{n/2}}\cdot 2^{-(n-1)/2} = 2^{-n}\pi^{-(n-1)/2}$ and rewriting $\exp(-(\log 2)^2/24) = 2^{-(\log 2)/24}$ gives Theorem~\ref{thm:a262810}.
+\end{proof}
+
+\begin{remark}
+Taking logarithms in Theorems~\ref{thm:a263160} and~\ref{thm:a262810} immediately yields $\frac{1}{n^2}\log a(n) = \log n - \log\log 2 + O(\frac{\log n}{n})$ and the same estimate for $\frac{1}{n^2}\log b(n)$, establishing Corollary~\ref{cor:root-limit}.
+\end{remark}
+
+\section{Numerical Verification}\label{sec:numerics}
+
+An accompanying zero-dependency Python~3 script (\texttt{verify.py}) independently verifies:
+\begin{enumerate}
+  \item Direct combinatorial dynamic programming from the literal lattice-path rules, matching~\eqref{eq:a-series} and~\eqref{eq:b-series} for $n\in\{1,2,3,4\}$ to machine precision.
+  \item High-precision evaluation of $C$:
+  \[
+    C = 10.753662835613289269205078134100404238789553876462\ldots,
+  \]
+  matching all published digits $10.75366283\ldots$ on \oeis{A263160}.
+  \item Comparison against all published exact terms in the OEIS b-files ($n\le 26$ for \oeis{A263160}, $n\le 25$ for \oeis{A262810}), together with cancellation-free evaluations of the truncated series over a $\pm 12\sigma$ window around $k_0$ up to $n=1000$.
+\end{enumerate}
+
+Let
+\[
+  C_n := \frac{a(n)\,\pi^{n/2}(\log 2)^{n(n-1)}}{n^{n(n-3/2)+1}},
+  \qquad
+  R_n := \frac{b(n)\,e^{1/12}\,2^{n+(\log 2)/24}\,\pi^{(n-1)/2}(\log 2)^{n^2+1}}{n^{n^2-n/2+1}}.
+\]
+Table~\ref{tab:numerics} summarizes the convergence of $C_n\to C$ and $R_n\to 1$. The data confirm $C_n/C - 1 = O(1/n)$ for \oeis{A263160} (with $n(C_n/C-1)\approx 1/6$) and indicate an even faster $R_n - 1 = O(1/n^2)$ cancellation of the $1/n$ error term for \oeis{A262810} (with $n^2(R_n-1)\approx 0.0862$).
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Numerical convergence for \oeis{A263160} ($C = 10.7536628356\ldots$) and \oeis{A262810}. Values for $n\le 26$ (\oeis{A263160}) and $n\le 25$ (\oeis{A262810}) agree to all displayed digits with the exact OEIS b-files.}
+\label{tab:numerics}
+\begin{tabular}{@{}r r r r | r r r@{}}
+\toprule
+ & \multicolumn{3}{c|}{\oeis{A263160} ($a(n)$)} & \multicolumn{3}{c}{\oeis{A262810} ($b(n)$)} \\
+\cmidrule(lr){2-4}\cmidrule(l){5-7}
+$n$ & $C_n$ & $(C_n/C - 1)$ & $n(C_n/C - 1)$ & $R_n$ & $(R_n - 1)$ & $n^2(R_n - 1)$ \\
+\midrule
+$10$   & $10.8790816510$ & $+1.166289\%$ & $+0.1166$ & $1.0008622948$ & $+0.086229\%$ & $+0.0862$ \\
+$20$   & $10.8365975111$ & $+0.771223\%$ & $+0.1542$ & $1.0002155019$ & $+0.021550\%$ & $+0.0862$ \\
+$25$   & $10.8212900474$ & $+0.628876\%$ & $+0.1572$ & $1.0001379158$ & $+0.013792\%$ & $+0.0862$ \\
+$26$   & $10.8188691115$ & $+0.606363\%$ & $+0.1577$ & ---            & ---           & ---       \\
+$50$   & $10.7886186865$ & $+0.325060\%$ & $+0.1625$ & $1.0000344771$ & $+0.003448\%$ & $+0.0862$ \\
+$100$  & $10.7713975599$ & $+0.164918\%$ & $+0.1649$ & $1.0000086192$ & $+0.000862\%$ & $+0.0862$ \\
+$200$  & $10.7625909958$ & $+0.083024\%$ & $+0.1660$ & $1.0000021548$ & $+0.000215\%$ & $+0.0862$ \\
+$500$  & $10.7572482687$ & $+0.033342\%$ & $+0.1667$ & $1.0000003448$ & $+0.000034\%$ & $+0.0862$ \\
+$1000$ & $10.7554578938$ & $+0.016693\%$ & $+0.1669$ & $1.0000000861$ & $+0.000009\%$ & $+0.0861$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{thebibliography}{9}
+
+\bibitem{OEIS}
+OEIS Foundation Inc.,
+\emph{The On-Line Encyclopedia of Integer Sequences},
+published electronically at \url{https://oeis.org},
+sequences \oeis{A262809}, \oeis{A262810}, \oeis{A263159}, and \oeis{A263160}
+(accessed November 25, 2026).
+
+\bibitem{Slowinski1998}
+J.~B.~Slowinski,
+The number of multiple alignments,
+\emph{Molecular Phylogenetics and Evolution} \textbf{10} (1998), 264--266.
+\href{https://doi.org/10.1006/mpev.1998.0522}{doi:10.1006/mpev.1998.0522}.
+
+\bibitem{Eger2015}
+S.~Eger,
+On the number of many-to-many alignments of multiple sequences,
+\emph{Journal of Automata, Languages and Combinatorics} \textbf{20} (2015), 53--65;
+preprint \href{https://arxiv.org/abs/1511.00622}{arXiv:1511.00622v2}.
+
+\bibitem{Trureturing2026}
+The Omega Institute (\texttt{trureturing}),
+\emph{First-zero lattice paths and the OEIS A263160 diagonal limit},
+Lean formalization module \texttt{D5/S1/Words/LatticePaths/KotesovecA263160.lean},
+\url{https://github.com/the-omega-institute/trureturing} (November 2026).
+
+\end{thebibliography}
+
+\end{document}
